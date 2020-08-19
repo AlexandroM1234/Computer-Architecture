@@ -6,7 +6,7 @@ PRN  = 0b01000111
 MUL = 0b10100010
 POP = 0b01000110
 PUSH  = 0b01000101
-
+ADD = 0b10100000
 class CPU:
     """Main CPU class."""
 
@@ -15,6 +15,17 @@ class CPU:
         self.ram = [0]*256
         self.reg = [0]*8
         self.pc = 0
+        self.running = False
+        self.sp = 7
+        self.branchtable = {
+            HLT : self.hlt_func,
+            LDI : self.ldi_func,
+            PRN : self.prn_func,
+            MUL : self.mult_func,
+            POP : self.pop_func,
+            PUSH : self.push_func,
+            ADD : self.add_func
+        }
 
     def ram_read(self,address):
         return self.ram[address]
@@ -95,6 +106,12 @@ class CPU:
         self.reg[register_address] = value
         self.pc += 3
 
+    def add_func(self):
+        regA = self.ram_read(self.pc+1)
+        regB = self.ram_read(self.pc+2)
+        self.alu("ADD",regA,regB)
+        self.pc +=3
+        
     def mult_func(self):
         regA = self.ram_read(self.pc+1)
         regB = self.ram_read(self.pc+2)
@@ -102,25 +119,27 @@ class CPU:
         self.pc +=3
 
     def pop_func(self):
-        print ("pop")
+        value = self.ram_read(self.reg[self.sp])
+        reg_address = self.ram_read(self.pc+1)
+        self.reg[reg_address] = value
+        self.reg[self.sp] += 1 
+        self.pc +=2
 
     def push_func(self):
-        print ("push")
-        
+        self.reg[self.sp] -= 1
+        reg_address = self.ram_read(self.pc+1)
+        memory_adress = self.reg[self.sp]
+        value = self.reg[reg_address]
+        self.ram_write(value,memory_adress)
+        self.pc +=2 
+    def hlt_func (self):
+        self.running = False
+
     def run(self):
         """Run the CPU."""
-        running = True
-        while running:
+
+        self.reg[self.sp] = 0xF4
+        self.running = True       
+        while self.running:
             IR = self.ram_read(self.pc)
-            if IR  == HLT:
-                running = False
-            elif IR == LDI:
-                self.ldi_func()
-            elif IR == PRN:
-                self.prn_func()
-            elif IR == MUL:
-                self.mult_func()
-            elif IR == POP:
-                print ("wow a POP")
-            elif IR == PUSH:
-                print ("wow")
+            self.branchtable[IR]()
