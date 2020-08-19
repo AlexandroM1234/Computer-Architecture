@@ -1,6 +1,11 @@
 """CPU functionality."""
-
 import sys
+HLT = 0b00000001
+LDI = 0b10000010
+PRN  = 0b01000111
+MUL = 0b10100010
+POP = 0b01000110
+PUSH  = 0b01000101
 
 class CPU:
     """Main CPU class."""
@@ -79,26 +84,43 @@ class CPU:
         for i in range(8):
             print(" %02X" % self.reg[i], end='')
 
-        print()
+    def prn_func(self):
+        register_address = self.ram_read(self.pc+1)
+        print(self.reg[register_address])
+        self.pc += 2
+    
+    def ldi_func(self):
+        register_address  =self.ram_read(self.pc+1)
+        value = self.ram_read(self.pc+2)
+        self.reg[register_address] = value
+        self.pc += 3
 
+    def mult_func(self):
+        regA = self.ram_read(self.pc+1)
+        regB = self.ram_read(self.pc+2)
+        self.alu("MUL",regA,regB)
+        self.pc +=3
+
+    def pop_func(self):
+        print ("pop")
+
+    def push_func(self):
+        print ("push")
+        
     def run(self):
         """Run the CPU."""
         running = True
         while running:
             IR = self.ram_read(self.pc)
-            if IR  == 0b00000001:
+            if IR  == HLT:
                 running = False
-            elif IR == 0b10000010:
-                register_address  =self.ram_read(self.pc+1)
-                value = self.ram_read(self.pc+2)
-                self.reg[register_address] = value
-                self.pc += 3
-            elif IR == 0b01000111:
-                register_address = self.ram_read(self.pc+1)
-                print(self.reg[register_address])
-                self.pc += 2
-            elif IR == 0b10100010:
-                regA = self.ram_read(self.pc+1)
-                regB = self.ram_read(self.pc+2)
-                self.alu("MUL",regA,regB)
-                self.pc +=3
+            elif IR == LDI:
+                self.ldi_func()
+            elif IR == PRN:
+                self.prn_func()
+            elif IR == MUL:
+                self.mult_func()
+            elif IR == POP:
+                print ("wow a POP")
+            elif IR == PUSH:
+                print ("wow")
