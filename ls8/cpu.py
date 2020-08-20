@@ -7,6 +7,8 @@ MUL = 0b10100010
 POP = 0b01000110
 PUSH  = 0b01000101
 ADD = 0b10100000
+CALL = 0b01010000 
+RET = 0b00010001
 class CPU:
     """Main CPU class."""
 
@@ -24,7 +26,9 @@ class CPU:
             MUL : self.mult_func,
             POP : self.pop_func,
             PUSH : self.push_func,
-            ADD : self.add_func
+            ADD : self.add_func,
+            CALL : self.call_func,
+            RET : self.ret_func
         }
 
     def ram_read(self,address):
@@ -68,10 +72,11 @@ class CPU:
             
     def alu(self, op, reg_a, reg_b):
         """ALU operations."""
-
         if op == "ADD":
+            print (self.reg[reg_a],self.reg[reg_b])
             self.reg[reg_a] += self.reg[reg_b]
-        if op == "MUL":
+            print(self.reg[reg_a] , self.reg[reg_b])
+        elif op == "MUL":
             self.reg[reg_a] *= self.reg[reg_b]
         #elif op == "SUB": etc
         else:
@@ -96,6 +101,7 @@ class CPU:
             print(" %02X" % self.reg[i], end='')
 
     def prn_func(self):
+        print("something")
         register_address = self.ram_read(self.pc+1)
         print(self.reg[register_address])
         self.pc += 2
@@ -131,7 +137,27 @@ class CPU:
         memory_adress = self.reg[self.sp]
         value = self.reg[reg_address]
         self.ram_write(value,memory_adress)
-        self.pc +=2 
+        self.pc +=2
+
+    def call_func(self):
+        # self.reg[self.sp] -= 1
+        # self.ram[self.reg[self.sp]] = self.pc + 2
+
+        # reg = self.ram[self.pc + 1]
+        # self.pc = self.reg[reg]
+        ret = self.pc + 2
+        self.reg[self.sp] -= 1
+
+        self.ram_write(ret,self.reg[self.sp]) 
+        self.pc = self.reg[self.ram_read(self.pc + 1)]
+
+    def ret_func(self):
+        # self.pc = self.ram[self.reg[self.sp]]
+        # self.reg[self.sp] += 1
+        value=self.ram_read(self.reg[self.sp])
+        self.pc = value
+        self.reg[self.sp] += 1
+
     def hlt_func (self):
         self.running = False
 
