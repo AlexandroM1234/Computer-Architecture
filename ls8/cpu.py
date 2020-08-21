@@ -23,7 +23,7 @@ class CPU:
         self.pc = 0
         self.running = False
         self.sp = 7
-        self.flags = [0]*8
+        self.flags = 0b00000000
         self.branchtable = {
             HLT : self.hlt_func,
             LDI : self.ldi_func,
@@ -86,8 +86,16 @@ class CPU:
         elif op == "MUL":
             self.reg[reg_a] *= self.reg[reg_b]
         elif op == "CMP":
-            self.CMP(self.reg[reg_a],self.reg[reg_b])
-        #elif op == "SUB": etc
+            if self.reg[reg_a] < self.reg[reg_b]:
+                self.flags = 0b00000100
+
+            elif self.reg[reg_a] > self.reg[reg_b]:
+                self.flags =  0b00000010
+
+            elif self.reg[reg_a] == self.reg[reg_b]:
+                self.flags =  0b00000001
+            else:
+                self.flags = 0b00000000
         else:
             raise Exception("Unsupported ALU operation")
         
@@ -109,29 +117,30 @@ class CPU:
         for i in range(8):
             print(" %02X" % self.reg[i], end='')
 
-    def CMP (self,reg_a,reg_b):
-        if self.reg[reg_a] < self.reg[reg_b]:
-            self.flags[-3] = 1
-
-        elif self.reg[reg_a] > self.reg[reg_b]:
-            self.flags[-2] = 1
-
-        elif self.reg[reg_a] == self.reg[reg_b]:
-            self.flags[-1] = 0
-        else:
-            self.flags.values = 0
-
+    def CMP (self):
+        reg_a = self.ram_read(self.pc+1)
+        reg_b = self.ram_read(self.pc+2)
+        self.alu("CMP",reg_a,reg_b)
         self.pc += 3
     
     def jump_func(self):
-        pass
+        reg_address = self.ram_read(self.pc + 1)
+        self.pc = self.reg[reg_address]
 
     def jeq_func(self):
-        pass
-    
-    def jne_func(self):
-        pass
+        if self.flags == 1:
+            # use jump method to get to the address stored in the given register
+            self.jump_func()
+        else:
+            self.pc +=2
 
+    def jne_func(self):
+        if self.flags != 1:
+            # use jump method to get to th address stored in the given register
+            self.jump_func()
+        else:
+            self.pc += 2
+            
     def prn_func(self):
         register_address = self.ram_read(self.pc+1)
         print(self.reg[register_address])
