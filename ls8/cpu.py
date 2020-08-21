@@ -9,6 +9,10 @@ PUSH  = 0b01000101
 ADD = 0b10100000
 CALL = 0b01010000 
 RET = 0b00010001
+CMP = 0b10100111
+JMP = 0b01010100
+JEQ = 0b01010101
+JNE = 0b01010110
 class CPU:
     """Main CPU class."""
 
@@ -19,6 +23,7 @@ class CPU:
         self.pc = 0
         self.running = False
         self.sp = 7
+        self.flags = [0]*8
         self.branchtable = {
             HLT : self.hlt_func,
             LDI : self.ldi_func,
@@ -28,7 +33,11 @@ class CPU:
             PUSH : self.push_func,
             ADD : self.add_func,
             CALL : self.call_func,
-            RET : self.ret_func
+            RET : self.ret_func,
+            CMP : self.CMP, 
+            JMP : self.jump_func,
+            JEQ : self.jeq_func,
+            JNE : self.jne_func
         }
 
     def ram_read(self,address):
@@ -69,19 +78,19 @@ class CPU:
 
         except:
             print("can not find it!")
-            
+
     def alu(self, op, reg_a, reg_b):
         """ALU operations."""
         if op == "ADD":
-            print (self.reg[reg_a],self.reg[reg_b])
             self.reg[reg_a] += self.reg[reg_b]
-            print(self.reg[reg_a] , self.reg[reg_b])
         elif op == "MUL":
             self.reg[reg_a] *= self.reg[reg_b]
+        elif op == "CMP":
+            self.CMP(self.reg[reg_a],self.reg[reg_b])
         #elif op == "SUB": etc
         else:
             raise Exception("Unsupported ALU operation")
-
+        
     def trace(self):
         """
         Handy function to print out the CPU state. You might want to call this
@@ -100,8 +109,30 @@ class CPU:
         for i in range(8):
             print(" %02X" % self.reg[i], end='')
 
+    def CMP (self,reg_a,reg_b):
+        if self.reg[reg_a] < self.reg[reg_b]:
+            self.flags[-3] = 1
+
+        elif self.reg[reg_a] > self.reg[reg_b]:
+            self.flags[-2] = 1
+
+        elif self.reg[reg_a] == self.reg[reg_b]:
+            self.flags[-1] = 0
+        else:
+            self.flags.values = 0
+
+        self.pc += 3
+    
+    def jump_func(self):
+        pass
+
+    def jeq_func(self):
+        pass
+    
+    def jne_func(self):
+        pass
+
     def prn_func(self):
-        print("something")
         register_address = self.ram_read(self.pc+1)
         print(self.reg[register_address])
         self.pc += 2
